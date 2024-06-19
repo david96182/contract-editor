@@ -139,7 +139,7 @@ class Contract(db.Model):
     __tablename__ = 'contracts'
     
     id = db.Column(db.Integer, primary_key=True)
-    employer_id = db.Column(db.Integer, db.ForeignKey('employees.id'), nullable=False)
+    employee_id = db.Column(db.Integer, db.ForeignKey('employees.id'), nullable=False)
     template_id = db.Column(db.Integer, db.ForeignKey('contract_templates.id'), nullable=False)
     contract_data = db.Column(db.JSON, nullable=False) 
     signed_date = db.Column(db.Date, nullable=False)
@@ -147,7 +147,7 @@ class Contract(db.Model):
     def to_dict(self):
         return {
             'id': self.id,
-            'employer_id': self.employer_id,
+            'employee_id': self.employee_id,
             'template_id': self.template_id,
             'contract_data': self.contract_data,
             'signed_date': self.signed_date
