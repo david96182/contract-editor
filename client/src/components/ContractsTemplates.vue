@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="flex justify-end button-container">
-      <button class="btn btn-accent btn-circle mr-4" onclick="form_modal.showModal()">
+      <button class="btn btn-accent btn-circle mr-4" @click="openEditor()">
         <span class="text-white text-2xl">+</span>
       </button>
     </div>
@@ -39,7 +39,7 @@
               </ul>
             </td>
             <td>
-              <button class="btn btn-circle ml-2" @click="editTemplate(template.id)">
+              <button class="btn btn-circle ml-2" @click="openEditor(template.id)">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="edit" width="20" height="20"><path fill="none" d="M0 0h24v24H0V0z"></path><path d="M3 17.46v3.04c0 .28.22.5.5.5h3.04c.13 0 .26-.05.35-.15L17.81 9.94l-3.75-3.75L3.15 17.1c-.1.1-.15.22-.15.36zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="#aeaeae" class="color000000 svgShape"></path></svg>
               </button>
               <button class="btn btn-circle ml-2" @click="previewTemplate(template)">
@@ -51,24 +51,10 @@
       </table>
     </div>
 
-    <!-- Modal Edit and Create-->
-    <dialog id="form_modal" class="modal">
-      <div class="modal-box">
-        <h2 class="text-lg font-bold mb-4">Add Template</h2>
-        <form @submit.prevent="createTemplate" class="flex flex-col items-center">
-          <div class="form-control mb-4">
-            <label for="name" class="label">Name:</label>
-            <input class="input input-bordered focus:ring-accent w-full max-w-xs" type="text" id="name" v-model="newTemplate.name" required>
-          </div>
-          <div class="form-control mb-4">
-            <label for="email" class="label">Email:</label>
-            <input class="input input-bordered focus:ring-accent w-full max-w-xs" type="email" id="email" v-model="newTemplate.active" required>
-          </div>
-          <div class="flex justify-end">
-            <button class="btn btn-accent mr-2" type="submit">Save</button>
-            <button class="btn btn-ghost" @click="closeModal">Cancel</button>
-          </div>
-        </form>
+    <!-- Modal Create and Edit-->
+    <dialog id="editor_modal" class="modal">
+      <div class="editor-box modal-box w-90 w-11 max-w-10xl">
+        <ContractsTemplateEditor :elementId="elementId" @close="closeEditor" />  
       </div>
     </dialog>
 
@@ -106,20 +92,21 @@
 </template>
 
 <script>
+import ContractsTemplateEditor from './ContractsTemplateEditor.vue';
+
 export default {
   data() {
     return {
       templates: [],
-      newTemplate: {
-        name: '',
-        active: false,
-        elements: []
-      },
       prevTemplateData: {
         name: '',
         elements: []
       },
+      elementId: null,
     };
+  },
+  components: {
+    ContractsTemplateEditor
   },
   created() {
     this.fetchTemplates();
@@ -136,34 +123,14 @@ export default {
           console.error('Error fetching templates:', error);
         });
     },
-    createTemplate() {
-      // Make an API call to create a new contract template
-      fetch(process.env.VUE_APP_API_URL + 'contracts/templates/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          company_id: 1, 
-          name: this.newTemplate.name,
-          email: this.newTemplate.email,
-        }),
-      })
-        .then(response => response.json())
-        .then(data => {
-          // Handle the created employee
-          this.templates.push(data);
-          document.getElementById('form_modal').close();
-        })
-        .catch(error => {
-          console.error('Error creating template:', error);
-        });
+    openEditor (templateId) {
+      this.templateId = templateId;
+      document.getElementById('editor_modal').showModal();
     },
-    closeModal() {
-      // Clear form data and close the modal
-      this.newTemplate.name = '';
-      this.newTemplate.active = '';
-      document.getElementById('form_modal').close();
+    closeEditor() {
+      this.fetchTemplates();
+      this.templateId = null;
+      document.getElementById('editor_modal').close();
     },
     previewTemplate(template) {
       this.prevTemplateData = { ...template };
@@ -173,7 +140,6 @@ export default {
 };
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped lang="scss">
 table {
   width: 75%;
@@ -274,5 +240,12 @@ table {
 
 .preview-modal-backdrop button:hover {
   background-color: #0056b3; /* Darker blue on hover */
+}
+
+.editor-box {
+  border-radius: 8px;
+  width: 85%;
+  max-width: 850px; 
+  overflow: auto;
 }
 </style>
