@@ -2653,6 +2653,11 @@ default-gateway@^6.0.3:
   dependencies:
     execa "^5.0.0"
 
+default-passive-events@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/default-passive-events/-/default-passive-events-2.0.0.tgz#79b1aa67becbaab38b718469b5480fef92eda649"
+  integrity sha512-eMtt76GpDVngZQ3ocgvRcNCklUMwID1PaNbCNxfpDXuiOXttSh0HzBbda1HU9SIUsDc02vb7g9+3I5tlqe/qMQ==
+
 defaults@^1.0.3:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/defaults/-/defaults-1.0.4.tgz#b0b02062c1e2aa62ff5d9528f0f98baa90978d7a"
@@ -5728,6 +5733,11 @@ signal-exit@^4.0.1:
   resolved "https://registry.yarnpkg.com/signal-exit/-/signal-exit-4.1.0.tgz#952188c1cbd546070e2dd20d0f41c0ae0530cb04"
   integrity sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw==
 
+signature_pad@^3.0.0-beta.4:
+  version "3.0.0-beta.4"
+  resolved "https://registry.yarnpkg.com/signature_pad/-/signature_pad-3.0.0-beta.4.tgz#2a8441559e9f439e7f2f525da3ee630ef973ecf6"
+  integrity sha512-cOf2NhVuTiuNqe2X/ycEmizvCDXk0DoemhsEpnkcGnA4kS5iJYTCqZ9As7tFBbsch45Q1EdX61833+6sjJ8rrw==
+
 sirv@^2.0.3:
   version "2.0.4"
   resolved "https://registry.yarnpkg.com/sirv/-/sirv-2.0.4.tgz#5dd9a725c578e34e449f332703eb2a74e46a29b0"
@@ -6433,7 +6443,16 @@ vue-template-es2015-compiler@^1.9.0:
   resolved "https://registry.yarnpkg.com/vue-template-es2015-compiler/-/vue-template-es2015-compiler-1.9.1.tgz#1ee3bc9a16ecbf5118be334bb15f9c46f82f5825"
   integrity sha512-4gDntzrifFnCEvyoO8PqyJDmguXgVPxKiIxrBKjIowvL9l+N66196+72XVYR8BBf1Uv1Fgt3bGevJ+sEmxfZzw==
 
-vue@^3.2.13:
+vue3-signature@^0.2.4:
+  version "0.2.4"
+  resolved "https://registry.yarnpkg.com/vue3-signature/-/vue3-signature-0.2.4.tgz#d57663d74c61e6cb6b9b5539364b244590cabd38"
+  integrity sha512-XFwwFVK9OG3F085pKIq2SlNVqx32WdFH+TXbGEWc5FfEKpx8oMmZuAwZZ50K/pH2FgmJSE8IRwU9DDhrLpd6iA==
+  dependencies:
+    default-passive-events "^2.0.0"
+    signature_pad "^3.0.0-beta.4"
+    vue "^3.2.37"
+
+vue@^3.2.13, vue@^3.2.37:
   version "3.4.29"
   resolved "https://registry.yarnpkg.com/vue/-/vue-3.4.29.tgz#fad5a0fe6dfa5c4a2cfbbc48c489e7989616a15b"
   integrity sha512-8QUYfRcYzNlYuzKPfge1UWC6nF9ym0lx7mpGVPJYNhddxEf3DD0+kU07NTL0sXuiT2HuJuKr/iEO8WvXvT0RSQ==

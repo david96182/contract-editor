@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="flex justify-end button-container">
-      <button class="btn btn-accent btn-circle mr-4" @click="openEditor()">
+      <button class="btn btn-accent btn-circle mr-4" @click="openCreator()">
         <span class="text-white text-2xl">+</span>
       </button>
     </div>
@@ -46,6 +46,72 @@
     </div>
 
     <!-- Modal Create-->
+    <dialog id="create_modal" class="modal">
+      <div class="create-modal-box modal-box w-11 max-w-10xl">
+        <h2 class="preview-modal-title text-lg font-bold mb-4">Sign Contract </h2>
+        <form @submit.prevent="createContract" class="flex flex-col items-center">
+          <div class="form-control mb-4">
+            <label class="form-control w-full max-w-xs">
+              <div class="label">
+                <span class="label-text">Employee</span>
+              </div>
+              <select class="select select-bordered" v-model="selectedEmployee" required>
+                <option disabled selected>Pick one</option>
+                <option v-for="employee in employees" :value="employee.id">{{ employee.name }}</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="form-control mb-4">
+            <label class="form-control w-full max-w-xs">
+              <div class="label">
+                <span class="label-text">Template</span>
+              </div>
+              <select class="select select-bordered" v-model="selectedTemplate" required>
+                <option disabled selected>Pick one</option>
+                <option v-for="template in templates" :value="template">{{ template.name }}</option>
+              </select>
+            </label>
+          </div>
+
+          <div v-if="selectedTemplate.name">
+            <div class="contract-content">
+              <div class="mb-5" v-for="element in selectedTemplate.elements" :key="element.id">
+                <template v-if="element.type === 'input_field'">
+                  <div class="preview-field mt-10">
+                    <label class="form-control w-full max-w-xs">
+                      <p v-if="element.input_type === 'signature'">
+                        <Vue3Signature sigOption="" :w="'300px'" :h="'80px'"
+                                         class="example"></Vue3Signature>
+                      </p>
+                      <p v-else>
+                        <textarea class="textarea input_field" :id="element.id" required></textarea>
+                      </p>
+                      <hr>
+                      <div class="label">
+                        <span class="label-text-alt">{{ element.name }}</span>
+                      </div>
+                    </label>
+                  </div>
+                </template>
+                <contract v-else-if="element.type === 'image'">
+                  <img :src="element.url" width="10%" :alt="element.name" class="max-w-xs preview-image">
+                </contract>
+                <contract v-else>
+                  <p class="text-justify">{{ element.text }}</p>
+                </contract>
+              </div>
+            </div>
+          </div>
+          
+
+          <div class="flex justify-end">
+            <button class="btn btn-accent mr-2" type="submit">Sign</button>
+            <button class="btn btn-ghost" @click="closeCreate">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </dialog>
 
     <!-- Modal Preview-->
     <dialog id="preview_modal" class="modal">
@@ -57,7 +123,7 @@
               <div class="preview-field mt-10">
                 <label class="form-control w-full max-w-xs">
                   <p v-if="element.input_type === 'signature'">
-                    <img :src="element.data" width="10%" :alt="element.name" class="max-w-xs preview-image">
+                    <img :src="element.data" width="25%" :alt="element.name" class="max-w-xs preview-image">
                   </p>
                   <p v-else>
                     <b>{{ element.data }}</b>
@@ -92,15 +158,25 @@ export default {
     return {
       contracts: [],
       elements: [],
+      templates: [],
+      employees: [],
       prevtemplateData: {
         name: '',
         elements: [],
         employee: ''
       },
+      selectedEmployee: null,
+      selectedTemplate: {
+        id: '',
+        name: '',
+        elements: [],
+      },
     };
   },
   created() {
     this.fetchElements();
+    this.fetchTemplates();
+    this.fetchEmployees();
     this.fetchcontracts();
   },
   methods: {
@@ -142,6 +218,27 @@ export default {
           console.error('Error fetching templates:', error);
         });
     },
+    fetchTemplates() {
+      fetch(process.env.VUE_APP_API_URL + 'contracts/templates/')
+        .then(response => response.json())
+        .then(data => {
+          const activeTemplates = data.filter(template => template.active);
+          this.templates = activeTemplates;
+        })
+        .catch(error => {
+          console.error('Error fetching templates:', error);
+        });
+    },
+    fetchEmployees() {
+      fetch(process.env.VUE_APP_API_URL + 'employees/')
+        .then(response => response.json())
+        .then(data => {
+          this.employees = data;
+        })
+        .catch(error => {
+          console.error('Error fetching employees:', error);
+        });
+    },
     getTemplateById(template_id) {
       return fetch(process.env.VUE_APP_API_URL + `contracts/templates/${template_id}`)
         .then(response => response.json())
@@ -175,14 +272,23 @@ export default {
     formatDate(dateString) {
       return new Date(dateString).toLocaleDateString();
     },
-    openEditor (contractId) {
-      this.contractId = templateId;
-      document.getElementById('editor_modal').showModal();
+    openCreator () {
+      document.getElementById('create_modal').showModal();
     },
-    closeEditor() {
+    closeCreate() {
+      this.selectedEmployee = null;
+      this.selectedEmployee = {
+        id: '',
+        name: '',
+        elements: [],
+      };
+      this.prevtemplateData = {
+        name: '',
+        elements: [],
+        employee: ''
+      };
       this.fetchcontracts();
-      this.contractId = null;
-      document.getElementById('editor_modal').close();
+      document.getElementById('create_modal').close();
     },
     previewContract(contract_id) {
       const contract = this.contracts.find(c => c.id === contract_id);
@@ -211,11 +317,50 @@ export default {
         console.error('Contract not found');
       }
       
-      console.log(this.prevtemplateData)
       document.getElementById('preview_modal').showModal();
     },
     findElementByKey(key) {
       return this.elements.find(element => element.id == key);
+    },
+    createContract() {
+      const inputFields = document.getElementsByClassName('input_field');
+      
+      let contract_data = {}
+      this.selectedTemplate.elements.forEach((element) => {
+        if (element.type === 'input_field') {
+          if (element.input_type === 'signature') {
+            contract_data[element.id] = 'https://i.imgur.com/AvYlBf5.png'; 
+          } else {
+            const inputField = document.getElementById(element.id); // Get the text input field by its ID
+            if (inputField) {
+              contract_data[element.id] = inputField.value; // Retrieve the value from the input field and assign it to contract_data[element.id]
+          }
+        }
+        }
+      });
+
+      const employee_id = this.selectedEmployee;
+      const template_id = this.selectedTemplate.id;
+
+      fetch(process.env.VUE_APP_API_URL + 'contracts/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          employee_id: employee_id,
+          template_id: template_id,
+          contract_data: contract_data
+        }),
+      })
+        .then(response => response.json())
+        .then(data => {
+          this.contracts.push(data);
+          this.closeCreate();
+        })
+        .catch(error => {
+          console.error('Error creating contract:', error);
+        });
     }
   },
 };
@@ -322,5 +467,82 @@ table {
 .preview-modal-backdrop button:hover {
   background-color: #0056b3; /* Darker blue on hover */
 }
+
+#create_modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.contract-content {
+  background-color: #fff; /* White background */
+  border: 1px solid #ccc; /* Light gray border */
+  padding: 20px;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 1200px; /* Limit maximum width */
+  overflow: auto; 
+  font-family: Arial, sans-serif; 
+  font-size: 11px; 
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.create-modal-box {
+  padding: 20px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 800px; /* Limit maximum width */
+  overflow: auto; /* Enable scrolling if content exceeds dimensions */
+  font-family: Arial, sans-serif; /* Set font family to Arial */
+  font-size: 11px; /* Set font size to 11px */
+  line-height: 1.5; /* Set line height for readability */
+}
+
+.contract-content hr {
+  border: none;
+  border-top: 1px solid #ccc; /* Gray horizontal line */
+  margin: 10px 0; /* Space above and below the line */
+}
+
+.contract-content label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.contract-content p {
+  margin-bottom: 10px;
+}
+
+.contract-content b {
+  font-weight: bold;
+}
+
+.contract-content .preview-field {
+  margin-bottom: 15px;
+}
+
+.contract-content .preview-image {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin-top: 10px;
+}
+
+.contract-content .label-text-alt {
+  font-weight: bold;
+}
+
+.contract-content .text-justify {
+  text-align: justify;
+}
+
 
 </style>
