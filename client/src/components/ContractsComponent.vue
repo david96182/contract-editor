@@ -36,7 +36,7 @@
               </ul>
             </td>
             <td>
-              <button class="btn btn-circle ml-2" @click="previewcontract(template)">
+              <button class="btn btn-circle ml-2" @click="previewContract(contract.id)">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" id="RedEye" width="20" height="20"><path fill="none" stroke="#aeaeae" stroke-miterlimit="10" stroke-width="4" d="M32,18c16,0,29,14,29,14S48,46,32,46,3,32,3,32,16,18,32,18Z" class="colorStroke010101 svgStroke"></path><circle cx="32" cy="32" r="14" fill="none" stroke="#aeaeae" stroke-miterlimit="10" stroke-width="4" class="colorStroke010101 svgStroke"></circle><circle cx="32" cy="32" r="2" fill="none" stroke="#aeaeae" stroke-miterlimit="10" stroke-width="4" class="colorStroke010101 svgStroke"></circle></svg>
               </button>
             </td>
@@ -50,12 +50,18 @@
     <!-- Modal Preview-->
     <dialog id="preview_modal" class="modal">
       <div class="preview-modal-box modal-box w-11 max-w-10xl">
-        <h2 class="preview-modal-title text-lg font-bold mb-4">{{ prevcontractData.name }} preview</h2>
+        <h2 class="preview-modal-title text-lg font-bold mb-4">{{ prevtemplateData.name }}: {{ prevtemplateData.employee }} </h2>
         <div class="preview-content">
-          <div class="mb-5" v-for="element in prevcontractData.elements" :key="element.id">
+          <div class="mb-5" v-for="element in prevtemplateData.elements" :key="element.id">
             <contract v-if="element.type === 'input_field'">
               <div class="preview-field mt-10">
                 <label class="form-control w-full max-w-xs">
+                  <p v-if="element.input_type === 'signature'">
+                    <img :src="element.data" width="10%" :alt="element.name" class="max-w-xs preview-image">
+                  </p>
+                  <p v-else>
+                    <b>{{ element.data }}</b>
+                  </p>
                   <hr>
                   <div class="label">
                     <span class="label-text-alt">{{ element.name }}</span>
@@ -86,9 +92,10 @@ export default {
     return {
       contracts: [],
       elements: [],
-      prevcontractData: {
+      prevtemplateData: {
         name: '',
-        elements: []
+        elements: [],
+        employee: ''
       },
     };
   },
@@ -135,6 +142,16 @@ export default {
           console.error('Error fetching templates:', error);
         });
     },
+    getTemplateById(template_id) {
+      return fetch(process.env.VUE_APP_API_URL + `contracts/templates/${template_id}`)
+        .then(response => response.json())
+        .then(data => {
+          return data;
+        })
+        .catch(error => {
+          console.error('Error fetching template information:', error);
+        });
+    },
     getTemplateName(template_id) {
       return fetch(process.env.VUE_APP_API_URL + `contracts/templates/${template_id}`)
         .then(response => response.json())
@@ -167,8 +184,34 @@ export default {
       this.contractId = null;
       document.getElementById('editor_modal').close();
     },
-    previewcontract(template) {
-      this.prevcontractData = { ...template };
+    previewContract(contract_id) {
+      const contract = this.contracts.find(c => c.id === contract_id);
+
+      if (contract) {
+        this.prevtemplateData.name = null;
+        this.prevtemplateData.elements = [];
+        this.getEmployeeName(contract.employee_id)
+          .then( employee => {
+            this.prevtemplateData.employee = employee   
+          });
+
+        this.getTemplateById(contract.template_id)
+          .then(template => {
+            this.prevtemplateData.name = template.name;
+            template.elements.forEach(element => {
+              const contractData = contract.contract_data[element.id];
+              const updatedElement = { ...element, data: contractData };
+              this.prevtemplateData.elements.push(updatedElement);
+            });
+          })
+          .catch(error => {
+            console.error('Error fetching template:', error);
+          });
+      } else {
+        console.error('Contract not found');
+      }
+      
+      console.log(this.prevtemplateData)
       document.getElementById('preview_modal').showModal();
     },
     findElementByKey(key) {
